@@ -1,0 +1,298 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#cc0000;--red-dim:rgba(204,0,0,0.18);--red-faint:rgba(204,0,0,0.07);
+  --bg:#080808;--bg2:#111;--bg3:#181818;
+  --border:rgba(204,0,0,0.22);--border-hover:rgba(204,0,0,0.55);
+  --text:#e8e8e8;--text-dim:#888;--text-faint:#555;
+}
+body,html{background:var(--bg)}
+.root{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;position:relative;overflow-x:hidden}
+
+.scan-line{position:fixed;top:0;left:0;right:0;height:2px;background:var(--red);opacity:0.5;z-index:999;animation:scanDown 6s linear infinite}
+@keyframes scanDown{0%{top:-2px;opacity:0}5%{opacity:0.5}95%{opacity:0.3}100%{top:100%;opacity:0}}
+
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(var(--red-faint) 1px,transparent 1px),linear-gradient(90deg,var(--red-faint) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+.line-h{position:fixed;left:0;right:0;height:1px;background:var(--red);opacity:0;z-index:1;animation:flashH 8s ease-in-out infinite}
+.line-v{position:fixed;top:0;bottom:0;width:1px;background:var(--red);opacity:0;z-index:1;animation:flashV 10s ease-in-out infinite}
+.line-h:nth-child(1){animation-delay:0s}.line-h:nth-child(2){animation-delay:3s}.line-v:nth-child(3){animation-delay:1.5s}.line-v:nth-child(4){animation-delay:5s}
+@keyframes flashH{0%,100%{opacity:0;top:10%}50%{opacity:0.35;top:60%}}
+@keyframes flashV{0%,100%{opacity:0;left:15%}50%{opacity:0.25;left:75%}}
+
+nav{position:sticky;top:0;z-index:100;background:rgba(8,8,8,0.97);border-bottom:1px solid var(--red);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:58px}
+.logo{font-size:16px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#fff;display:flex;align-items:center;gap:10px;white-space:nowrap}
+.logo-mark{width:8px;height:8px;border:2px solid var(--red);border-radius:50%;animation:ping 2s ease-in-out infinite}
+@keyframes ping{0%,100%{box-shadow:0 0 0 0 rgba(204,0,0,0.7)}50%{box-shadow:0 0 0 7px rgba(204,0,0,0)}}
+
+.nav-links{display:flex;gap:2px}
+.nav-btn{background:none;border:none;color:var(--text);font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:8px 14px;cursor:pointer;border-radius:2px;transition:color 0.2s,background 0.2s;white-space:nowrap}
+.nav-btn:hover{color:#fff;background:var(--red-faint)}
+.nav-btn.on{color:#fff;background:var(--red-dim);border-bottom:2px solid var(--red)}
+
+.hamburger{display:none;flex-direction:column;gap:5px;background:none;border:1px solid var(--border);padding:8px 10px;cursor:pointer;border-radius:2px}
+.hamburger span{display:block;width:20px;height:1.5px;background:#fff;transition:all 0.3s}
+.hamburger.open span:nth-child(1){transform:rotate(45deg) translate(4.5px,4.5px)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(4.5px,-4.5px)}
+
+.mobile-menu{display:none;position:absolute;top:58px;left:0;right:0;background:rgba(8,8,8,0.99);border-bottom:1px solid var(--red);padding:0.5rem 0;z-index:99}
+.mobile-menu.open{display:block}
+.mob-btn{display:block;width:100%;background:none;border:none;color:var(--text);font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:14px 1.5rem;text-align:left;cursor:pointer;border-left:3px solid transparent;transition:all 0.2s}
+.mob-btn:hover{color:#fff;background:var(--red-faint);border-left-color:var(--red)}
+.mob-btn.on{color:#fff;border-left-color:var(--red);background:var(--red-dim)}
+
+.page{display:none;position:relative;z-index:2;min-height:80vh}
+.page.on{display:block}
+
+.hero{padding:5rem 1.5rem 4rem;text-align:center}
+.hero-eyebrow{font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--red);margin-bottom:1.2rem;animation:fadeUp 0.8s ease-out both}
+.hero-title{font-size:clamp(36px,8vw,80px);font-weight:800;letter-spacing:-1px;color:#fff;line-height:1;animation:fadeUp 0.8s 0.1s ease-out both}
+.hero-title span{color:var(--red)}
+.hero-desc{max-width:480px;margin:1.5rem auto 0;font-size:16px;color:var(--text-dim);line-height:1.7;animation:fadeUp 0.8s 0.2s ease-out both}
+.hero-line{width:80px;height:2px;background:var(--red);margin:2rem auto;animation:grow 0.8s 0.4s ease-out both;transform:scaleX(0);transform-origin:center}
+@keyframes grow{to{transform:scaleX(1)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:600px;margin:0 auto 4rem;padding:0 1.5rem;animation:fadeUp 0.8s 0.3s ease-out both}
+.stat{background:var(--bg2);border:1px solid var(--border);padding:1.25rem 1rem;text-align:center;border-radius:2px;border-top:2px solid var(--red)}
+.stat-num{font-size:28px;font-weight:800;color:#fff;line-height:1}
+.stat-lbl{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-top:4px}
+
+.section-wrap{max-width:860px;margin:0 auto;padding:0 1.5rem 4rem}
+.section-header{margin-bottom:2rem;padding-top:3rem;border-left:3px solid var(--red);padding-left:1rem}
+.section-eyebrow{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--red);margin-bottom:6px}
+.section-title{font-size:clamp(22px,4vw,36px);font-weight:800;color:#fff;letter-spacing:-0.5px}
+
+.rule-list{display:flex;flex-direction:column;gap:10px}
+.rule{display:flex;gap:16px;align-items:flex-start;padding:1.1rem 1.25rem;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:2px;transition:background 0.2s,border-color 0.2s;animation:fadeUp 0.5s ease-out both}
+.rule:hover{background:var(--red-faint);border-color:var(--border-hover)}
+.rule-n{font-size:22px;font-weight:800;color:rgba(204,0,0,0.35);min-width:32px;line-height:1.1;font-variant-numeric:tabular-nums}
+.rule-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;letter-spacing:0.3px}
+.rule-body{font-size:14px;color:var(--text-dim);line-height:1.6}
+
+.moves-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.move{background:var(--bg2);border:1px solid var(--border);padding:1.25rem 1rem;border-radius:2px;transition:all 0.2s;animation:fadeUp 0.5s ease-out both;position:relative;overflow:hidden}
+.move::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);transform:scaleX(0);transition:transform 0.3s;transform-origin:left}
+.move:hover::after{transform:scaleX(1)}
+.move:hover{background:var(--red-faint);border-color:var(--border-hover)}
+.move-name{font-size:13px;font-weight:700;color:#fff;letter-spacing:0.5px;margin-bottom:6px;text-transform:uppercase}
+.move-how{font-size:13px;color:var(--text-dim);line-height:1.5}
+.move-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:2px;margin-top:8px}
+.badge-pass{background:rgba(204,0,0,0.18);color:#e87070}
+.badge-recv{background:rgba(60,60,200,0.18);color:#8888ee}
+.badge-spec{background:rgba(180,120,0,0.18);color:#ccaa44}
+
+.suggest-form,.punish-form{background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--red);padding:1.75rem;border-radius:2px}
+.f-label{display:block;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--red);margin-bottom:6px;margin-top:1.2rem}
+.f-label:first-child{margin-top:0}
+.f-in,.f-sel,.f-ta{width:100%;background:#0d0d0d;border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:14px;padding:10px 12px;border-radius:2px;outline:none;transition:border-color 0.2s}
+.f-in:focus,.f-sel:focus,.f-ta:focus{border-color:var(--red)}
+.f-sel option{background:#111}
+.f-ta{resize:vertical;min-height:90px}
+.f-hint{font-size:12px;color:var(--text-faint);margin-top:4px}
+.f-btn{width:100%;margin-top:1.5rem;padding:13px;background:transparent;border:1.5px solid var(--red);color:#fff;font-family:inherit;font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:background 0.2s}
+.f-btn:hover{background:var(--red-dim)}
+.success-msg{display:none;text-align:center;padding:2rem;background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--red);border-radius:2px;animation:fadeUp 0.4s ease-out both}
+.success-ttl{font-size:16px;font-weight:700;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.success-sub{font-size:14px;color:var(--text-dim)}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+.about-block{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--red);padding:1.25rem 1.5rem;border-radius:2px;margin-bottom:12px;animation:fadeUp 0.5s ease-out both}
+.about-block h3{font-size:14px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.about-block p{font-size:14px;color:var(--text-dim);line-height:1.7}
+
+.lore-title{font-size:clamp(18px,3vw,26px);font-weight:800;color:#fff;margin-bottom:1rem}
+.lore-text{font-size:15px;color:var(--text-dim);line-height:1.8;margin-bottom:1.5rem}
+
+.verdict-feed{display:flex;flex-direction:column;gap:8px}
+.verdict{display:flex;gap:14px;align-items:flex-start;padding:1rem 1.25rem;background:var(--bg2);border:1px solid var(--border);border-radius:2px;animation:fadeUp 0.5s ease-out both}
+.verdict-icon{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--red);display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--red-faint)}
+.verdict-icon svg{width:14px;height:14px;stroke:var(--red);fill:none;stroke-width:2}
+.verdict-who{font-size:13px;font-weight:700;color:#fff}
+.verdict-what{font-size:13px;color:var(--text-dim);margin-top:2px}
+.verdict-time{font-size:11px;color:var(--text-faint);margin-top:4px;letter-spacing:1px}
+
+footer{position:relative;z-index:2;text-align:center;padding:2rem 1rem;border-top:1px solid var(--border);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-faint)}
+
+@media(max-width:700px){
+  .nav-links{display:none}
+  .hamburger{display:flex}
+  .two-col{grid-template-columns:1fr}
+  .stat-row{grid-template-columns:repeat(3,1fr)}
+  .moves-grid{grid-template-columns:repeat(2,1fr)}
+  .hero{padding:3.5rem 1rem 2.5rem}
+}
+@media(max-width:400px){
+  .moves-grid{grid-template-columns:1fr}
+  .stat-row{grid-template-columns:1fr 1fr}
+  nav{padding:0 1rem}
+}
+</style>
+
+<h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Silent Football — official game site with rulebook, moves, and punishment requests</h2>
+
+<div class="root" id="root">
+  <div class="grid-bg"></div>
+  <div class="line-h"></div><div class="line-h"></div>
+  <div class="line-v"></div><div class="line-v"></div>
+  <div class="scan-line"></div>
+
+  <nav>
+    <div class="logo"><div class="logo-mark"></div>Silent Football</div>
+    <div class="nav-links">
+      <button class="nav-btn on" onclick="go('home',this)">Home</button>
+      <button class="nav-btn" onclick="go('about',this)">About</button>
+      <button class="nav-btn" onclick="go('rules',this)">Rulebook</button>
+      <button class="nav-btn" onclick="go('moves',this)">Moves</button>
+      <button class="nav-btn" onclick="go('suggest',this)">Suggest Punishment</button>
+    </div>
+    <button class="hamburger" id="hbg" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+  </nav>
+
+  <div class="mobile-menu" id="mobmenu">
+    <button class="mob-btn on" onclick="go('home',this,true)">Home</button>
+    <button class="mob-btn" onclick="go('about',this,true)">About</button>
+    <button class="mob-btn" onclick="go('rules',this,true)">Rulebook</button>
+    <button class="mob-btn" onclick="go('moves',this,true)">Moves</button>
+    <button class="mob-btn" onclick="go('suggest',this,true)">Suggest a Punishment</button>
+  </div>
+
+  <div id="home" class="page on">
+    <div class="hero">
+      <div class="hero-eyebrow">The Official Record</div>
+      <div class="hero-title">Silent<br><span>Football</span></div>
+      <div class="hero-desc">A game of invisible passes, silent gestures, and absolute authority. One Minister. No words. No mercy.</div>
+      <div class="hero-line"></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="stat-num">8</div><div class="stat-lbl">Moves</div></div>
+      <div class="stat"><div class="stat-num">7</div><div class="stat-lbl">Rules</div></div>
+      <div class="stat"><div class="stat-num">1</div><div class="stat-lbl">Minister</div></div>
+    </div>
+  </div>
+
+  <div id="about" class="page">
+    <div class="section-wrap">
+      <div class="section-header">
+        <div class="section-eyebrow">Origins &amp; Overview</div>
+        <div class="section-title">About the Game</div>
+      </div>
+      <p class="lore-text">Silent Football is a social game built entirely around restraint. An invisible ball moves between players using only codified whole-body gestures. Silence is the law during play — but when violations are called, punishments are proposed and spoken aloud to the Minister. Violations are judged. Punishments are carried out. Play continues.</p>
+      <div class="two-col">
+        <div>
+          <div class="about-block" style="animation-delay:0.05s">
+            <h3>The Premise</h3>
+            <p>Players sit or stand in a group. The ball — invisible, weightless, and very real — is passed between them using whole-body gestures from the official Moves Registry. Anyone who speaks during play, makes a sound, or uses an unauthorized gesture has violated the rules.</p>
+          </div>
+          <div class="about-block" style="animation-delay:0.1s">
+            <h3>The Committee</h3>
+            <p>When a violation is spotted, play pauses and the Committee convenes. Any player may propose a punishment — spoken aloud to the Minister. The Minister hears all proposals and delivers the final verdict.</p>
+          </div>
+        </div>
+        <div>
+          <div class="about-block" style="animation-delay:0.15s">
+            <h3>The Minister</h3>
+            <p>One player holds the office of Minister. The Minister has absolute authority over all punishments. They may accept a proposed punishment, modify it, or impose an entirely independent verdict. There is no appeal.</p>
+          </div>
+          <div class="about-block" style="animation-delay:0.2s">
+            <h3>How It Ends</h3>
+            <p>The game has no set end. Play continues indefinitely until the Minister declares it over. There is no winning. There is no elimination — refusing a punishment results in being kicked out, but accepting it means you keep playing regardless of how many violations you've committed.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="rules" class="page">
+    <div class="section-wrap">
+      <div class="section-header">
+        <div class="section-eyebrow">Official Regulations</div>
+        <div class="section-title">The Rulebook</div>
+      </div>
+      <div class="rule-list">
+        <div class="rule" style="animation-delay:0.05s"><div class="rule-n">01</div><div><div class="rule-title">What Happens in the Game, Stays in the Game</div><div class="rule-body">Nothing that occurs during play is to be discussed, recorded, or shared outside of it. No exceptions. This is the highest rule.</div></div></div>
+        <div class="rule" style="animation-delay:0.1s"><div class="rule-n">02</div><div><div class="rule-title">Silence During Play</div><div class="rule-body">No verbal communication is permitted while the ball is in play. This includes words, whispers, sighs, laughter, and all other vocalizations. Silence is only required during active play — not during Committee proceedings.</div></div></div>
+        <div class="rule" style="animation-delay:0.15s"><div class="rule-n">03</div><div><div class="rule-title">The Ball is Real</div><div class="rule-body">There is exactly one ball. It is invisible. All players must treat it as physically present at all times. Disbelief is a violation.</div></div></div>
+        <div class="rule" style="animation-delay:0.2s"><div class="rule-n">04</div><div><div class="rule-title">Whole-Body Gestures Only</div><div class="rule-body">All moves must use whole-body gestures from the official Moves Registry. Unauthorized gestures constitute an immediate violation. The move list will be updated as new moves are approved by the Minister.</div></div></div>
+        <div class="rule" style="animation-delay:0.25s"><div class="rule-n">05</div><div><div class="rule-title">Calling a Violation</div><div class="rule-body">Any player may signal a violation by raising their hand in silence. Play pauses immediately. The Committee convenes and punishment proposals are spoken aloud to the Minister.</div></div></div>
+        <div class="rule" style="animation-delay:0.3s"><div class="rule-n">06</div><div><div class="rule-title">Committee Procedure</div><div class="rule-body">When the Committee convenes, any player may speak a punishment proposal aloud to the Minister. All proposals must be safe and non-harmful. The Minister hears all proposals before delivering a verdict.</div></div></div>
+        <div class="rule" style="animation-delay:0.35s"><div class="rule-n">07</div><div><div class="rule-title">Ministerial Authority</div><div class="rule-body">The Minister has final and absolute say over all punishments. They may accept a proposal, modify it, or impose an entirely independent verdict. No punishment that is physically harmful or dangerous may be given.</div></div></div>
+        <div class="rule" style="animation-delay:0.4s"><div class="rule-n">08</div><div><div class="rule-title">No Appeals</div><div class="rule-body">The Minister's verdict is final. Protesting a verdict — verbally or via gesture — is itself a violation and results in an additional punishment.</div></div></div>
+        <div class="rule" style="animation-delay:0.45s"><div class="rule-n">09</div><div><div class="rule-title">Accepting Punishment</div><div class="rule-body">All punishments must be accepted and carried out immediately. There is no elimination for violations — you carry out the punishment and keep playing. Refusing a punishment is the only way to be removed from the game.</div></div></div>
+        <div class="rule" style="animation-delay:0.5s"><div class="rule-n">10</div><div><div class="rule-title">No End Condition</div><div class="rule-body">The game has no fixed end point. Play continues until the Minister declares the game over. There is no winning or losing — only the Minister's authority and the ongoing rule of silence.</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="moves" class="page">
+    <div class="section-wrap">
+      <div class="section-header">
+        <div class="section-eyebrow">Current Registry</div>
+        <div class="section-title">Official Moves</div>
+      </div>
+      <div class="moves-grid">
+        <div class="move" style="animation-delay:0.05s"><div class="move-name">Coming Soon</div><div class="move-how">The official move list will be added here once provided by the Minister.</div><span class="move-badge badge-spec">Pending</span></div>
+      </div>
+      <p style="font-size:13px;color:var(--text-faint);margin-top:1.5rem;letter-spacing:1px">Move registry pending. The Minister will provide the official list of whole-body gestures.</p>
+    </div>
+  </div>
+
+  <div id="suggest" class="page">
+    <div class="section-wrap">
+      <div class="section-header">
+        <div class="section-eyebrow">Player Submissions</div>
+        <div class="section-title">Suggest a Punishment</div>
+      </div>
+      <div class="suggest-form" id="suggestForm">
+        <label class="f-label">Your Name</label>
+        <input class="f-in" type="text" id="sName" placeholder="Your name" />
+        <label class="f-label">Punishment Name</label>
+        <input class="f-in" type="text" id="sMove" placeholder="e.g. The Statue" />
+        <label class="f-label">Description</label>
+        <textarea class="f-ta" id="sDesc" placeholder="Describe the punishment clearly. Must be safe and non-harmful..."></textarea>
+        <div class="f-hint">All suggestions are reviewed by the Minister before being added to the official punishment registry. Any harmful or dangerous submissions will be rejected.</div>
+        <button class="f-btn" onclick="submitSuggest()">Submit for Review</button>
+      </div>
+      <div class="success-msg" id="suggestOk">
+        <div class="success-ttl">Submission Received</div>
+        <div class="success-sub">Your proposed punishment has been logged. The Minister will review it before any official addition to the registry.</div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+  <footer>Silent Football &mdash; The Official Record &mdash; All authority reserved</footer>
+</div>
+
+<script>
+function go(id, btn, mobile) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  document.querySelectorAll('.nav-btn,.mob-btn').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+  const mirror = mobile ? document.querySelector('.nav-btn[onclick*="\''+id+'\'"]') : document.querySelector('.mob-btn[onclick*="\''+id+'\'"]');
+  if (mirror) mirror.classList.add('on');
+  if (mobile) { document.getElementById('mobmenu').classList.remove('open'); document.getElementById('hbg').classList.remove('open'); }
+  document.getElementById(id).querySelectorAll('.rule,.move,.about-block,.verdict').forEach(el => { el.style.animation = 'none'; el.offsetHeight; el.style.animation = ''; });
+}
+
+function toggleMenu() {
+  document.getElementById('hbg').classList.toggle('open');
+  document.getElementById('mobmenu').classList.toggle('open');
+}
+
+function submitSuggest() {
+  const n = document.getElementById('sName').value.trim();
+  const m = document.getElementById('sMove').value.trim();
+  const d = document.getElementById('sDesc').value.trim();
+  if (!n || !m || !d) { alert('All fields are required.'); return; }
+  document.getElementById('suggestForm').style.display = 'none';
+  document.getElementById('suggestOk').style.display = 'block';
+}
+
+</script>
