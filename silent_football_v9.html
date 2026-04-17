@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Silent Football — The Official Record</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#cc0000;--red-bright:#e52222;--red-dim:rgba(204,0,0,0.18);--red-faint:rgba(204,0,0,0.07);
+  --bg:#080808;--bg2:#111;--bg3:#181818;
+  --border:rgba(204,0,0,0.22);--border-hover:rgba(204,0,0,0.55);
+  --text:#e8e8e8;--text-dim:#888;--text-faint:#444;
+}
+html,body{background:var(--bg);min-height:100vh}
+.root{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;position:relative;overflow-x:hidden}
+
+/* BACKGROUND FX */
+.scan-line{position:fixed;top:0;left:0;right:0;height:2px;background:var(--red);opacity:0.5;z-index:999;animation:scanDown 6s linear infinite;pointer-events:none}
+@keyframes scanDown{0%{top:-2px;opacity:0}5%{opacity:0.5}95%{opacity:0.3}100%{top:100%;opacity:0}}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(var(--red-faint) 1px,transparent 1px),linear-gradient(90deg,var(--red-faint) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:180px}
+.line-h{position:fixed;left:0;right:0;height:1px;background:var(--red);opacity:0;z-index:1;animation:flashH 8s ease-in-out infinite;pointer-events:none}
+.line-v{position:fixed;top:0;bottom:0;width:1px;background:var(--red);opacity:0;z-index:1;animation:flashV 10s ease-in-out infinite;pointer-events:none}
+.line-h:nth-child(1){animation-delay:0s}.line-h:nth-child(2){animation-delay:3s}
+.line-v:nth-child(3){animation-delay:1.5s}.line-v:nth-child(4){animation-delay:5s}
+@keyframes flashH{0%,100%{opacity:0;top:10%}50%{opacity:0.3;top:60%}}
+@keyframes flashV{0%,100%{opacity:0;left:15%}50%{opacity:0.2;left:75%}}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:200;background:rgba(8,8,8,0.98);border-bottom:1px solid var(--red);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:58px;gap:12px}
+.logo{font-size:15px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#fff;display:flex;align-items:center;gap:10px;white-space:nowrap;cursor:pointer;flex-shrink:0;user-select:none}
+.logo-mark{width:8px;height:8px;border:2px solid var(--red);border-radius:50%;animation:ping 2s ease-in-out infinite;flex-shrink:0}
+@keyframes ping{0%,100%{box-shadow:0 0 0 0 rgba(204,0,0,0.7)}50%{box-shadow:0 0 0 7px rgba(204,0,0,0)}}
+.nav-edition-badge{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:2px;border:1px solid;flex-shrink:0}
+.badge-standard{color:#e87070;background:rgba(204,0,0,0.12);border-color:rgba(204,0,0,0.3)}
+.badge-school{color:#88bbee;background:rgba(60,120,200,0.12);border-color:rgba(60,120,200,0.3)}
+.nav-links{display:flex;gap:4px;align-items:center}
+.nav-btn{background:#1a0000;border:1px solid rgba(204,0,0,0.4);color:#e87070;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:7px 13px;cursor:pointer;border-radius:2px;transition:all 0.2s;white-space:nowrap}
+.nav-btn:hover{background:rgba(204,0,0,0.28);border-color:var(--red);color:#fff}
+.nav-btn.on{background:var(--red);border-color:var(--red);color:#fff}
+.nav-btn.home-btn{background:#130000;border-color:rgba(204,0,0,0.3);color:#aa5555}
+.nav-btn.home-btn:hover{background:rgba(204,0,0,0.18);color:#ff8888}
+
+/* HAMBURGER */
+.hamburger{display:none;flex-direction:column;gap:5px;background:#1a0000;border:1px solid rgba(204,0,0,0.5);padding:9px 11px;cursor:pointer;border-radius:2px;flex-shrink:0}
+.hamburger span{display:block;width:20px;height:1.5px;background:#e87070;transition:all 0.3s}
+.hamburger.open span:nth-child(1){transform:rotate(45deg) translate(4.5px,4.5px)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(4.5px,-4.5px)}
+
+/* MOBILE MENU */
+.mobile-menu{display:none;position:absolute;top:58px;left:0;right:0;background:rgba(5,0,0,0.99);border-bottom:1px solid var(--red);padding:0.5rem 0;z-index:190}
+.mobile-menu.open{display:block}
+.mob-btn{display:block;width:100%;background:none;border:none;color:#cc6666;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:14px 1.5rem;text-align:left;cursor:pointer;border-left:3px solid transparent;transition:all 0.2s}
+.mob-btn:hover{color:#fff;background:var(--red-faint);border-left-color:var(--red)}
+.mob-btn.on{color:#fff;border-left-color:var(--red);background:var(--red-dim)}
+.mob-divider{height:1px;background:var(--border);margin:6px 1.5rem}
+
+/* PAGE TRANSITIONS */
+.page{display:none;position:relative;z-index:2;min-height:80vh}
+.page.on{display:block;animation:pageIn 0.35s ease-out both}
+@keyframes pageIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes grow{to{transform:scaleX(1)}}
+
+/* LANDING */
+.landing{padding:6rem 1.5rem 3rem;text-align:center}
+.landing-eyebrow{font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--red);margin-bottom:1.2rem;animation:fadeUp 0.8s ease-out both}
+.glitch-wrap{display:inline-block;cursor:default;animation:fadeUp 0.8s 0.1s ease-out both}
+.landing-title{font-size:clamp(40px,9vw,88px);font-weight:800;letter-spacing:-1px;color:#fff;line-height:1}
+.landing-title span{color:var(--red)}
+.glitch-wrap:hover .landing-title{animation:glitch 0.45s steps(2) infinite}
+@keyframes glitch{
+  0%{text-shadow:2px 0 var(--red),-2px 0 rgba(0,200,255,0.6);clip-path:inset(10% 0 80% 0)}
+  25%{text-shadow:-2px 0 var(--red),2px 0 rgba(0,200,255,0.6);clip-path:inset(55% 0 20% 0)}
+  50%{text-shadow:2px 0 rgba(0,200,255,0.6),-2px 0 var(--red);clip-path:inset(30% 0 50% 0)}
+  75%{text-shadow:-1px 0 var(--red),1px 0 rgba(0,200,255,0.6);clip-path:inset(75% 0 5% 0)}
+  100%{text-shadow:none;clip-path:none}
+}
+.landing-desc{max-width:460px;margin:1.5rem auto 0;font-size:16px;color:var(--text-dim);line-height:1.7;animation:fadeUp 0.8s 0.2s ease-out both}
+.landing-line{width:80px;height:2px;background:var(--red);margin:2rem auto;animation:grow 0.8s 0.38s ease-out both;transform:scaleX(0);transform-origin:center}
+
+/* DECREE */
+.decree-block{max-width:560px;margin:0 auto 2rem;border-left:2px solid var(--red);padding:0.85rem 1rem 0.85rem 1.25rem;background:var(--red-faint);animation:fadeUp 0.8s 0.45s ease-out both;text-align:left}
+.decree-quote{font-size:14px;font-style:italic;color:var(--text-dim);line-height:1.65;transition:opacity 0.4s}
+.decree-attr{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--red);margin-top:7px}
+
+.decree-marquee-wrap{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:10px 0}
+.decree-marquee{display:flex;gap:40px;white-space:nowrap;animation:marqueeScroll 28s linear infinite}
+.decree-marquee:hover{animation-play-state:paused}
+.dm-item{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(204,0,0,0.55);flex-shrink:0}
+.dm-item::before{content:'▸ '}
+@keyframes marqueeScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* EDITION CARDS */
+.edition-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:680px;margin:0 auto;animation:fadeUp 0.8s 0.55s ease-out both}
+.edition-card{background:var(--bg2);border:1px solid var(--border);border-radius:2px;padding:2rem 1.75rem;text-align:left;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden}
+.edition-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.edition-card.standard::before{background:var(--red)}
+.edition-card.school::before{background:#3a7bd5}
+.edition-card:hover{transform:translateY(-2px)}
+.edition-card.standard:hover{border-color:rgba(204,0,0,0.5);background:var(--red-faint)}
+.edition-card.school:hover{border-color:rgba(60,120,200,0.4);background:rgba(60,120,200,0.05)}
+.edition-tag{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:inline-block;padding:2px 8px;border-radius:2px}
+.edition-card.standard .edition-tag{color:#e87070;background:rgba(204,0,0,0.15)}
+.edition-card.school .edition-tag{color:#88bbee;background:rgba(60,120,200,0.15)}
+.edition-card-title{font-size:22px;font-weight:800;color:#fff;margin-bottom:8px;letter-spacing:-0.3px}
+.edition-card-desc{font-size:14px;color:var(--text-dim);line-height:1.6;margin-bottom:1.25rem}
+.edition-card-btn{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:10px 18px;border-radius:2px;transition:all 0.2s}
+.edition-card.standard .edition-card-btn{background:rgba(204,0,0,0.2);color:#ff8888;border:1.5px solid rgba(204,0,0,0.5)}
+.edition-card.standard:hover .edition-card-btn{background:var(--red);color:#fff;border-color:var(--red)}
+.edition-card.school .edition-card-btn{background:rgba(60,120,200,0.15);color:#88bbee;border:1.5px solid rgba(60,120,200,0.45)}
+.edition-card.school:hover .edition-card-btn{background:#3a7bd5;color:#fff;border-color:#3a7bd5}
+
+/* INNER PAGE HERO */
+.hero{padding:5rem 1.5rem 4rem;text-align:center}
+.hero-eyebrow{font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--red);margin-bottom:1.2rem;animation:fadeUp 0.8s ease-out both}
+.hero-title{font-size:clamp(36px,8vw,80px);font-weight:800;letter-spacing:-1px;color:#fff;line-height:1;animation:fadeUp 0.8s 0.1s ease-out both}
+.hero-title span{color:var(--red)}
+.hero-desc{max-width:480px;margin:1.5rem auto 0;font-size:16px;color:var(--text-dim);line-height:1.7;animation:fadeUp 0.8s 0.2s ease-out both}
+.hero-line{width:80px;height:2px;background:var(--red);margin:2rem auto;animation:grow 0.8s 0.4s ease-out both;transform:scaleX(0);transform-origin:center}
+
+/* STATS */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:600px;margin:0 auto 4rem;padding:0 1.5rem;animation:fadeUp 0.8s 0.3s ease-out both}
+.stat{background:var(--bg2);border:1px solid var(--border);padding:1.25rem 1rem;text-align:center;border-radius:2px;border-top:2px solid var(--red)}
+.stat-num{font-size:28px;font-weight:800;color:#fff;line-height:1}
+.stat-lbl{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-top:4px}
+
+/* SECTION */
+.section-wrap{max-width:860px;margin:0 auto;padding:0 1.5rem 4rem}
+.section-header{margin-bottom:2rem;padding-top:3rem;border-left:3px solid var(--red);padding-left:1rem}
+.section-eyebrow{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--red);margin-bottom:6px}
+.section-title{font-size:clamp(22px,4vw,36px);font-weight:800;color:#fff;letter-spacing:-0.5px}
+
+/* RULES */
+.rule-list{display:flex;flex-direction:column;gap:10px}
+.rule{display:flex;gap:16px;align-items:flex-start;padding:1.1rem 1.25rem;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:2px;transition:background 0.2s,border-color 0.2s;animation:fadeUp 0.5s ease-out both}
+.rule:hover{background:var(--red-faint);border-color:var(--border-hover)}
+.rule-n{font-size:22px;font-weight:800;color:rgba(204,0,0,0.35);min-width:32px;line-height:1.1;font-variant-numeric:tabular-nums}
+.rule-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;letter-spacing:0.3px}
+.rule-body{font-size:14px;color:var(--text-dim);line-height:1.6}
+.rule-top{border-left-color:#ffcc00}
+.rule-top .rule-n{color:rgba(255,200,0,0.5)}
+.rule-top:hover{background:rgba(255,200,0,0.04);border-color:rgba(255,200,0,0.4)}
+
+/* MOVES */
+.moves-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.move{background:var(--bg2);border:1px solid var(--border);padding:1.25rem 1rem;border-radius:2px;transition:all 0.2s;animation:fadeUp 0.5s ease-out both;position:relative;overflow:hidden}
+.move::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);transform:scaleX(0);transition:transform 0.3s;transform-origin:left}
+.move:hover::after{transform:scaleX(1)}
+.move:hover{background:var(--red-faint);border-color:var(--border-hover)}
+.move-name{font-size:13px;font-weight:700;color:#fff;letter-spacing:0.5px;margin-bottom:6px;text-transform:uppercase}
+.move-how{font-size:13px;color:var(--text-dim);line-height:1.5}
+.move-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:2px;margin-top:8px;position:relative;cursor:default}
+.badge-pass{background:rgba(204,0,0,0.18);color:#e87070}
+.badge-recv{background:rgba(60,60,200,0.18);color:#8888ee}
+.badge-spec{background:rgba(180,120,0,0.18);color:#ccaa44}
+.badge-tip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1c0000;border:1px solid rgba(204,0,0,0.35);color:#cc9999;font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;padding:5px 10px;border-radius:2px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.15s;z-index:20}
+.move-badge:hover .badge-tip{opacity:1}
+
+/* MOVES PENDING */
+.moves-pending{border:1px solid var(--border);border-left:3px solid rgba(204,0,0,0.4);background:var(--bg2);padding:2.5rem 1.5rem;border-radius:2px;text-align:center}
+.moves-pending-icon{font-size:28px;margin-bottom:1rem;color:rgba(204,0,0,0.25);line-height:1}
+.moves-pending-title{font-size:13px;font-weight:700;color:#fff;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.moves-pending-body{font-size:13px;color:var(--text-faint);line-height:1.7}
+
+/* FORM */
+.suggest-form{background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--red);padding:2rem;border-radius:2px}
+.form-intro{display:flex;gap:14px;align-items:flex-start;background:var(--red-faint);border:1px solid var(--border);border-left:2px solid var(--red);padding:1rem 1.1rem;border-radius:2px;margin-bottom:1.75rem}
+.form-intro-icon{font-size:20px;color:rgba(204,0,0,0.4);flex-shrink:0;margin-top:2px}
+.form-intro p{font-size:13px;color:var(--text-dim);line-height:1.65}
+.f-field{margin-bottom:1.25rem}
+.f-label{display:block;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--red);margin-bottom:8px}
+.f-optional{color:var(--text-faint);font-weight:400;letter-spacing:1px}
+.f-in,.f-ta{width:100%;background:#0a0000;border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:14px;padding:11px 13px;border-radius:2px;outline:none;transition:border-color 0.2s,box-shadow 0.2s}
+.f-in:focus,.f-ta:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(204,0,0,0.1)}
+.f-ta{resize:vertical;min-height:100px;line-height:1.6}
+.f-radio-group{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.f-radio{display:flex;flex-direction:column;gap:4px;padding:10px 12px;background:#0a0000;border:1px solid var(--border);border-radius:2px;cursor:pointer;transition:all 0.2s}
+.f-radio:hover{border-color:rgba(204,0,0,0.45);background:var(--red-faint)}
+.f-radio input{display:none}
+.f-radio input:checked ~ span{color:#fff}
+.f-radio:has(input:checked){border-color:var(--red);background:var(--red-dim)}
+.f-radio span{font-size:13px;font-weight:700;color:var(--text-dim);letter-spacing:0.5px;transition:color 0.2s}
+.f-radio small{font-size:11px;color:var(--text-faint);line-height:1.4}
+.f-hint{font-size:12px;color:var(--text-faint);margin-bottom:1.25rem;line-height:1.6;padding:0.75rem 1rem;border:1px solid var(--border);border-radius:2px;background:rgba(255,255,255,0.02)}
+.f-btn{width:100%;padding:14px;background:var(--red);border:none;color:#fff;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:background 0.2s,opacity 0.2s;display:block}
+.f-btn:hover{background:var(--red-bright)}
+.f-btn:disabled{opacity:0.5;cursor:not-allowed}
+.f-error{margin-top:10px;font-size:12px;color:#ff6666;text-align:center;padding:8px;background:rgba(204,0,0,0.1);border:1px solid rgba(204,0,0,0.3);border-radius:2px}
+.success-msg{display:none;text-align:center;padding:3rem 2rem;background:var(--bg2);border:1px solid var(--border);border-top:2px solid var(--red);border-radius:2px;animation:fadeUp 0.4s ease-out both}
+.success-icon{font-size:32px;color:var(--red);margin-bottom:1rem;display:block}
+.success-ttl{font-size:16px;font-weight:700;color:#fff;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.success-sub{font-size:14px;color:var(--text-dim);line-height:1.7;max-width:380px;margin:0 auto}
+@media(max-width:700px){
+  .f-radio-group{grid-template-columns:1fr}
+  .suggest-form{padding:1.25rem}
+}
+
+/* ABOUT */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.about-block{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--red);padding:1.25rem 1.5rem;border-radius:2px;margin-bottom:12px;animation:fadeUp 0.5s ease-out both}
+.about-block h3{font-size:14px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.about-block p{font-size:14px;color:var(--text-dim);line-height:1.7}
+.lore-text{font-size:15px;color:var(--text-dim);line-height:1.8;margin-bottom:1.5rem}
+.school-banner{background:rgba(60,120,200,0.08);border:1px solid rgba(60,120,200,0.25);border-left:3px solid #3a7bd5;padding:1rem 1.25rem;border-radius:2px;margin-bottom:2rem;font-size:14px;color:#88bbee;line-height:1.6}
+.school-banner strong{color:#aaccff;display:block;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+
+footer{position:relative;z-index:2;text-align:center;padding:2rem 1rem;border-top:1px solid var(--border);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-faint)}
+
+/* RESPONSIVE — Mobile */
+@media(max-width:700px){
+  .nav-links{display:none}
+  .hamburger{display:flex}
+  .two-col{grid-template-columns:1fr}
+  .stat-row{grid-template-columns:repeat(3,1fr)}
+  .moves-grid{grid-template-columns:repeat(2,1fr)}
+  .hero{padding:3.5rem 1rem 2.5rem}
+  .edition-cards{grid-template-columns:1fr;max-width:420px}
+  .landing{padding:4rem 1.25rem 2rem}
+  .landing-desc{font-size:14px}
+  .section-wrap{padding:0 1rem 3rem}
+  .section-header{padding-top:2rem}
+  .rule{padding:0.9rem 1rem}
+  .rule-title{font-size:14px}
+  .rule-body{font-size:13px}
+  .decree-block{margin-left:0;margin-right:0}
+  .suggest-form{padding:1.25rem}
+}
+@media(max-width:420px){
+  .moves-grid{grid-template-columns:1fr}
+  .stat-row{grid-template-columns:1fr 1fr}
+  nav{padding:0 1rem;height:52px}
+  .logo{font-size:13px;letter-spacing:2px}
+  .mobile-menu{top:52px}
+  .edition-card{padding:1.5rem 1.25rem}
+  .edition-card-title{font-size:18px}
+}
+/* Tablet */
+@media(min-width:701px) and (max-width:900px){
+  .landing{padding:5rem 2rem 2.5rem}
+  .edition-cards{max-width:580px}
+  .moves-grid{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="root" id="root">
+  <div class="grid-bg"></div>
+  <div class="grain"></div>
+  <div class="line-h"></div><div class="line-h"></div>
+  <div class="line-v"></div><div class="line-v"></div>
+  <div class="scan-line"></div>
+
+  <nav>
+    <div class="logo" onclick="goHome()">
+      <div class="logo-mark"></div>
+      Silent Football
+      <span id="navBadge" class="nav-edition-badge" style="display:none"></span>
+    </div>
+    <div class="nav-links" id="navLinks"></div>
+    <button class="hamburger" id="hbg" onclick="toggleMenu()" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <div class="mobile-menu" id="mobmenu"></div>
+
+  <!-- LANDING -->
+  <div id="landing" class="page on">
+    <div class="landing">
+      <div class="landing-eyebrow">The Official Record</div>
+      <div class="glitch-wrap" title="Hover me">
+        <div class="landing-title">Silent<br><span>Football</span></div>
+      </div>
+      <div class="landing-desc">A game of invisible passes, whole-body gestures, and absolute authority. One Minister. No words. No mercy.</div>
+      <div class="landing-line"></div>
+      <div class="decree-block">
+        <div class="decree-quote" id="decreeQ">"The ball is real. Your excuses are not."</div>
+        <div class="decree-attr">— The Minister's Decree</div>
+      </div>
+      <div class="decree-marquee-wrap" style="max-width:680px;margin:0 auto 2.5rem;animation:fadeUp 0.8s 0.65s ease-out both">
+        <div class="decree-marquee" id="marquee">
+          <span class="dm-item">The Minister's word is final</span>
+          <span class="dm-item">Silence is the law</span>
+          <span class="dm-item">The ball is real</span>
+          <span class="dm-item">No appeals</span>
+          <span class="dm-item">Compliance is mandatory</span>
+          <span class="dm-item">Violations are judged</span>
+          <span class="dm-item">Play continues</span>
+          <span class="dm-item">The Committee convenes</span>
+          <span class="dm-item">Your excuses are noted and disregarded</span>
+          <span class="dm-item">Authority is non-negotiable</span>
+          <span class="dm-item">The Minister's word is final</span>
+          <span class="dm-item">Silence is the law</span>
+          <span class="dm-item">The ball is real</span>
+          <span class="dm-item">No appeals</span>
+          <span class="dm-item">Compliance is mandatory</span>
+          <span class="dm-item">Violations are judged</span>
+          <span class="dm-item">Play continues</span>
+          <span class="dm-item">The Committee convenes</span>
+          <span class="dm-item">Your excuses are noted and disregarded</span>
+          <span class="dm-item">Authority is non-negotiable</span>
+        </div>
+      </div>
+
+      <div class="edition-cards">
+        <div class="edition-card standard" onclick="setEdition('standard')">
+          <div class="edition-tag">Standard Edition</div>
+          <div class="edition-card-title">Full Rules</div>
+          <div class="edition-card-desc">The complete game with punishments, the Minister's full authority, and no end condition. Play until the Minister says stop.</div>
+          <div class="edition-card-btn">Enter <span>→</span></div>
+        </div>
+        <div class="edition-card school" onclick="setEdition('school')">
+          <div class="edition-tag">School Edition</div>
+          <div class="edition-card-title">No Punishments</div>
+          <div class="edition-card-desc">Same game, same rules, same silence — just played for fun with no punishments. Perfect for school or casual play.</div>
+          <div class="edition-card-btn">Enter <span>→</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STANDARD: ABOUT -->
+  <div id="s-about" class="page">
+    <div class="section-wrap">
+      <div class="section-header">
+        <div class="section-eyebrow">Origins &amp; Overview</div>
+        <div class="section-title">About the Game</div>
+      </div>
+      <p class="lore-text">Silent Football is a social game built entirely around restraint. An invisible ball moves between players using only whole-body gestures. Silence is the law during play — but when violations are called, punishments are proposed and spoken aloud to the Minister. Violations are judged. Punishments are carried out. Play continues.</p>
+      <div class="two-col">
+        <div>
+          <div class="about-block" style="animation-delay:0.05s"><h3>The Premise</h3><p>Players sit or stand in a group. The ball — invisible, weightless, and very real — is passed between them using whole-body gestures from the official Moves Registry. Anyone who speaks during play, makes a sound, or uses an unauthorized gesture has violated the rules.</p></div>
+          <div class="about-block" style="animation-delay:0.1s"><h3>The Committee</h3><p>When a violation is spotted, play pauses and the Committee convenes. Any player may propose a punishment — spoken aloud to the Minister. The Minister hears all proposals and delivers the final verdict.</p></div>
+        </div>
+        <div>
+          <div class="about-block" style="animation-delay:0.15s"><h3>The Minister</h3><p>One player holds the office of Minister. The Minister has absolute authority over all punishments. They may accept a proposed punishment, modify it, or impose an entirely independent verdict. There is no appeal.</p></div>
+          <div class="about-block" style="animation-delay:0.2s"><h3>How It Ends</h3><p>The game has no set end. Play continues indefinitely until the Minister declares it over. Violations don't eliminate you — you carry out the punishment and keep playing. Refusing a punishment is the only way out.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STANDARD: RULES -->
+  <div id="s-rules" class="page">
+    <div class="section-wrap">
+      <div class="section-header">
+        <div class="section-eyebrow">Official Regulations</div>
+        <div class="section-title">The Rulebook</div>
+      </div>
+      <div class="rule-list">
+        <div class="rule rule-top" style="animation-delay:0.05s"><div class="rule-n">01</div><div><div class="rule-title">What Happens in the Game, Stays in the Game</div><div class="rule-body">Nothing that occurs during play is to be discussed, recorded, or shared outside of it. No exceptions. This is the highest rule.</div></div></div>
+        <div class="rule" style="animation-delay:0.1s"><div class="rule-n">02</div><div><div class="rule-title">Silence During Play</div><div class="rule-body">No verbal communication is permitted while the ball is in play. This includes words, whispers, sighs, laughter, and all other vocalizations.</div></div></div>
+        <div class="rule" style="animation-delay:0.15s"><div class="rule-n">03</div><div><div class="rule-title">The Ball is Real</div><div class="rule-body">There is exactly one ball. It is invisible. All players must treat it as physically present at all times. Disbelief is a violation.</div></div></div>
+        <div class="rule" style="animation-delay:0.2s"><div class="rule-n">04</div><div><div class="rule-title">Whole-Body Gestures Only</div><div class="rule-body">All moves must use whole-body gestures from the official Moves Registry. Unauthorized gestures constitute an immediate violation.</div></div></div>
+        <div class="rule" style="animation-delay:0.25s"><div class="rule-n">05</div><div><div class="rule-title">Calling a Violation</div><div class="rule-body">Any player may signal a violation by raising their hand in silence. Play pauses immediately. The Committee convenes and punishment proposals are spoken aloud to the Minister.</div></div></div>
+        <div class="rule" style="animation-delay:0.3s"><div class="rule-n">06</div><div><div class="rule-title">Committee Procedure</div><div class="rule-body">When the Committee convenes, any player may speak a punishment proposal aloud to the Minister. All proposals must be safe and non-harmful. The Minister hears all proposals before delivering a verdict.</div></div></div>
+        <div class="rule" style="animation-delay:0.35s"><div class="rule-n">07</div><div><div class="rule-title">Ministerial Authority</div><div class="rule-body">The Minister has final and absolute say over all punishments. They may accept a proposal, modify it, or impose an entirely independent verdict. No punishment that is physically harmful or dangerous may be given.</div></div></div>
+        <div class="rule" style="animation-delay:0.4s"><div class="rule-n">08</div><div><div class="rule-title">No Appeals</div><div class="rule-body">The Minister's verdict is final. Protesting a verdict — verbally or via gesture — is itself a violation and results in an additional punishment.</div></div></div>
+        <div class="rule" style="animation-delay:0.45s"><div class="rule-n">09</div><div><div class="rule-title">Accepting Punishment</div><div class="rule-body">All punishments must be accepted and carried out immediately. There is no elimination for violations — you carry out the punishment and keep playing. Refusing a punishment is the only way to be removed from the game.</div></div></div>
+        <div class="rule" style="animation-delay:0.5s"><div class="rule-n">10</div><div><div class="rule-title">No End Condition</div><div class="rule-body">The game has no fixed end point. Play continues until the Minister declares the game over. There is no winning or losing — only the Minister's authority and the ongoing rule of silence.</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STANDARD: MOVES -->
+  <div id="s-moves" class="page">
+    <div class="section-wrap">
+      <div class="section-header">
+        <div class="section-eyebrow">Current Registry</div>
+        <div class="section-title">Official Moves</div>
+      </div>
+      <div class="moves-pending">
+        <div class="moves-pending-icon">&#9632;&#9632;&#9632;</div>
+        <div class="moves-pending-title">Registry Pending</div>
+        <div class="moves-pending-body">The official move list has not yet been submitted by the Minister.<br>This registry will be updated once the Minister provides the official list of whole-body gestures.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUGGEST A MOVE (shared) -->
+  <div id="suggest-move" class="page">
+    <div class="hero" style="padding-bottom:2rem">
+      <div class="hero-eyebrow">Player Submissions</div>
+      <div class="hero-title">Suggest a <span>Move</span></div>
+      <div class="hero-desc">Think you've got a move worthy of the official registry? Submit it below. The Minister reviews all submissions before anything is added.</div>
+      <div class="hero-line"></div>
+    </div>
+    <div class="section-wrap" style="padding-top:0;max-width:620px">
+
+      <div class="suggest-form" id="suggestMoveForm">
+        <div class="form-intro">
+          <div class="form-intro-icon">⬡</div>
+          <p>All moves must use whole-body gestures only. No hand-only signals. The Minister has final authority over what enters the registry.</p>
+        </div>
+
+        <div class="f-field">
+          <label class="f-label">Your Name</label>
+          <input class="f-in" type="text" id="mName" placeholder="Who's submitting this?" autocomplete="off" />
+        </div>
+
+        <div class="f-field">
+          <label class="f-label">Move Name</label>
+          <input class="f-in" type="text" id="mMoveName" placeholder="e.g. The Crane, The Double-Back" autocomplete="off" />
+        </div>
+
+        <div class="f-field">
+          <label class="f-label">Type</label>
+          <div class="f-radio-group">
+            <label class="f-radio"><input type="radio" name="moveType" value="Pass" checked /><span>Pass</span><small>Sends the ball to another player</small></label>
+            <label class="f-radio"><input type="radio" name="moveType" value="Receive" /><span>Receive</span><small>Acknowledges catching the ball</small></label>
+            <label class="f-radio"><input type="radio" name="moveType" value="Special" /><span>Special</span><small>A unique or situational move</small></label>
+          </div>
+        </div>
+
+        <div class="f-field">
+          <label class="f-label">How to Perform It</label>
+          <textarea class="f-ta" id="mGesture" placeholder="Describe the full-body gesture clearly. Be specific — someone who has never seen it should be able to do it from your description alone."></textarea>
+        </div>
+
+        <div class="f-field">
+          <label class="f-label">Any Notes? <span class="f-optional">(optional)</span></label>
+          <textarea class="f-ta" id="mNotes" placeholder="Variations, edge cases, inspiration, or anything else the Minister should know..." style="min-height:70px"></textarea>
+        </div>
+
+        <div class="f-hint">Submissions are logged and reviewed by the Minister. You'll hear nothing back — the move either appears in the registry or it doesn't.</div>
+        <button class="f-btn" id="submitMoveBtn" onclick="submitMove()">
+          <span id="submitMoveTxt">Submit to the Registry</span>
+          <span id="submitMoveSpinner" style="display:none">Submitting…</span>
+        </button>
+        <div class="f-error" id="moveError" style="display:none"></div>
+      </div>
+
+      <div class="success-msg" id="suggestMoveOk">
+        <div class="success-icon">✓</div>
+        <div class="success-ttl">Submission Logged</div>
+        <div class="success-sub">Your move has been sent to the Minister's registry. It will be reviewed before any official addition. The silence continues.</div>
+        <button class="f-btn" style="max-width:220px;margin:1.5rem auto 0" onclick="resetMoveForm()">Submit Another</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCHOOL: ABOUT -->
+  <div id="sc-about" class="page">
+    <div class="section-wrap">
+      <div class="section-header">
+        <div class="section-eyebrow">Origins &amp; Overview</div>
+        <div class="section-title">About the Game</div>
+      </div>
+      <div class="school-banner"><strong>School Edition</strong>This is the no-punishment version of Silent Football. Everything else is the same — the silence, the gestures, the Minister, the violations. You just play for fun.</div>
+      <p class="lore-text">Silent Football is a social game built entirely around restraint. An invisible ball moves between players using only whole-body gestures. Silence is the law during play. Violations are called. In this edition, there are no punishments — just the pure challenge of staying silent and in control.</p>
+      <div class="two-col">
+        <div>
+          <div class="about-block" style="animation-delay:0.05s"><h3>The Premise</h3><p>Players sit or stand in a group. The ball — invisible, weightless, and very real — is passed between them using whole-body gestures from the official Moves Registry. Anyone who speaks during play, makes a sound, or uses an unauthorized gesture has violated the rules.</p></div>
+          <div class="about-block" style="animation-delay:0.1s"><h3>Calling Violations</h3><p>When a violation is spotted, any player raises their hand in silence. Play pauses, the violation is acknowledged, and the game resumes. No punishment is given — violations are just noted and play continues.</p></div>
+        </div>
+        <div>
+          <div class="about-block" style="animation-delay:0.15s"><h3>The Minister</h3><p>One player still holds the office of Minister. The Minister calls the start of play, settles any disputes about violations, and is the only one who can declare the game over.</p></div>
+          <div class="about-block" style="animation-delay:0.2s"><h3>How It Ends</h3><p>The game ends when the Minister declares it over. There's no winning, no losing, and no punishments. Just the game, the silence, and the moves.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHOOL: RULES -->
+  <div id="sc-rules" class="page">
+    <div class="section-wrap">
+      <div class="section-header">
+        <div class="section-eyebrow">Official Regulations</div>
+        <div class="section-title">The Rulebook</div>
+      </div>
+      <div class="school-banner"><strong>School Edition</strong>These rules are the same as the standard edition, except there are no punishments. Violations are called and acknowledged — then play continues.</div>
+      <div class="rule-list">
+        <div class="rule rule-top" style="animation-delay:0.05s"><div class="rule-n">01</div><div><div class="rule-title">What Happens in the Game, Stays in the Game</div><div class="rule-body">Nothing that occurs during play is to be discussed, recorded, or shared outside of it. No exceptions. This is the highest rule.</div></div></div>
+        <div class="rule" style="animation-delay:0.1s"><div class="rule-n">02</div><div><div class="rule-title">Silence During Play</div><div class="rule-body">No verbal communication is permitted while the ball is in play. This includes words, whispers, sighs, laughter, and all other vocalizations.</div></div></div>
+        <div class="rule" style="animation-delay:0.15s"><div class="rule-n">03</div><div><div class="rule-title">The Ball is Real</div><div class="rule-body">There is exactly one ball. It is invisible. All players must treat it as physically present at all times. Disbelief is a violation.</div></div></div>
+        <div class="rule" style="animation-delay:0.2s"><div class="rule-n">04</div><div><div class="rule-title">Whole-Body Gestures Only</div><div class="rule-body">All moves must use whole-body gestures from the official Moves Registry. Unauthorized gestures constitute an immediate violation.</div></div></div>
+        <div class="rule" style="animation-delay:0.25s"><div class="rule-n">05</div><div><div class="rule-title">Calling a Violation</div><div class="rule-body">Any player may signal a violation by raising their hand in silence. Play pauses, the violation is acknowledged by the Minister, and play resumes. No punishment is issued.</div></div></div>
+        <div class="rule" style="animation-delay:0.3s"><div class="rule-n">06</div><div><div class="rule-title">Ministerial Authority</div><div class="rule-body">The Minister settles all disputes over whether a violation occurred. Their word is final. There is no appeal.</div></div></div>
+        <div class="rule" style="animation-delay:0.35s"><div class="rule-n">07</div><div><div class="rule-title">No End Condition</div><div class="rule-body">The game has no fixed end point. Play continues until the Minister declares the game over.</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHOOL: MOVES -->
+  <div id="sc-moves" class="page">
+    <div class="section-wrap">
+      <div class="section-header">
+        <div class="section-eyebrow">Current Registry</div>
+        <div class="section-title">Official Moves</div>
+      </div>
+      <div class="school-banner"><strong>School Edition</strong>Same moves as the standard game. All moves use whole-body gestures only.</div>
+      <div class="moves-pending">
+        <div class="moves-pending-icon">&#9632;&#9632;&#9632;</div>
+        <div class="moves-pending-title">Registry Pending</div>
+        <div class="moves-pending-body">The official move list has not yet been submitted by the Minister.<br>This registry will be updated once the Minister provides the official list of whole-body gestures.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Silent Football &mdash; The Official Record &mdash; All authority reserved</footer>
+</div>
+
+<script>
+const STANDARD_NAV = [
+  {id:'s-about',label:'About'},
+  {id:'s-rules',label:'Rulebook'},
+  {id:'s-moves',label:'Moves'},
+  {id:'suggest-move',label:'Suggest a Move'},
+];
+const SCHOOL_NAV = [
+  {id:'sc-about',label:'About'},
+  {id:'sc-rules',label:'Rulebook'},
+  {id:'sc-moves',label:'Moves'},
+  {id:'suggest-move',label:'Suggest a Move'},
+];
+
+let currentEdition = null;
+
+const decrees = [
+  '"The ball is real. Your excuses are not."',
+  '"Silence is not the absence of sound. It is the presence of discipline."',
+  '"The Committee speaks once. The Minister speaks last."',
+  '"There is no appeal. There is only compliance."',
+  '"Play continues until I say otherwise."',
+  '"A violation witnessed is a violation judged."',
+  '"Your confusion is not my concern. Your compliance is."',
+  '"Hesitation is not innocence. It is merely delayed guilt."',
+  '"The ball does not wait for you to be ready."',
+  '"I have heard your excuse. I found it unconvincing."',
+  '"There is no spirit of the rules. There is only the rules."',
+  '"The gesture was unauthorized. The intention is irrelevant."',
+  '"You may protest. The punishment will simply be larger."',
+  '"The ball was not lost. It was abandoned."',
+  '"Silence is not requested. It is required."',
+  '"Play does not stop because you are confused. Play stops when I say so."',
+  '"The Committee speaks. The Minister decides. That is the order of things."',
+  '"A violation seen is a violation judged. A violation missed is still a violation."',
+  '"You were warned by the rules themselves. I am merely their instrument."',
+  '"The game has no end because authority has no expiration."',
+  '"What you think happened and what happened are two different things."',
+  '"Unauthorized. Next."',
+  '"The punishment is not a debate topic."',
+  '"Your face is itself a violation."',
+  '"I don\'t recall asking for your interpretation."',
+  '"The ball moved. So did your mouth. Only one of those was permitted."',
+  '"Order is not restored. It was never lost. You simply forgot your place in it."',
+  '"The Minister has ruled. The matter is closed."',
+  '"Compliance is not optional. It is the only option."',
+  '"The silence continues whether you respect it or not."',
+];
+let decreeIdx = 0;
+setInterval(() => {
+  const el = document.getElementById('decreeQ');
+  if (!el) return;
+  el.style.opacity = 0;
+  setTimeout(() => {
+    decreeIdx = (decreeIdx + 1) % decrees.length;
+    el.textContent = decrees[decreeIdx];
+    el.style.opacity = 1;
+  }, 400);
+}, 4500);
+
+function setEdition(edition) {
+  currentEdition = edition;
+  const badge = document.getElementById('navBadge');
+  badge.style.display = 'inline-block';
+  badge.className = 'nav-edition-badge ' + (edition === 'standard' ? 'badge-standard' : 'badge-school');
+  badge.textContent = edition === 'standard' ? 'Standard' : 'School';
+  const nav = edition === 'standard' ? STANDARD_NAV : SCHOOL_NAV;
+  buildNav(nav);
+  go(nav[0].id);
+}
+
+function buildNav(items) {
+  const navLinks = document.getElementById('navLinks');
+  const mobmenu = document.getElementById('mobmenu');
+  navLinks.innerHTML = '';
+  mobmenu.innerHTML = '';
+
+  const homeBtn = document.createElement('button');
+  homeBtn.className = 'nav-btn home-btn';
+  homeBtn.textContent = '← Home';
+  homeBtn.onclick = goHome;
+  navLinks.appendChild(homeBtn);
+
+  const mobHome = document.createElement('button');
+  mobHome.className = 'mob-btn';
+  mobHome.textContent = '← Home';
+  mobHome.onclick = goHome;
+  mobmenu.appendChild(mobHome);
+
+  const div = document.createElement('div');
+  div.className = 'mob-divider';
+  mobmenu.appendChild(div);
+
+  items.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-btn';
+    btn.textContent = item.label;
+    btn.setAttribute('data-page', item.id);
+    btn.onclick = () => go(item.id, btn);
+    navLinks.appendChild(btn);
+
+    const mbtn = document.createElement('button');
+    mbtn.className = 'mob-btn';
+    mbtn.textContent = item.label;
+    mbtn.setAttribute('data-page', item.id);
+    mbtn.onclick = () => { go(item.id, mbtn); closeMobile(); };
+    mobmenu.appendChild(mbtn);
+  });
+}
+
+function go(id, clickedBtn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  const target = document.getElementById(id);
+  if (target) target.classList.add('on');
+  document.querySelectorAll('.nav-btn,.mob-btn').forEach(b => b.classList.remove('on'));
+  if (clickedBtn) {
+    clickedBtn.classList.add('on');
+    document.querySelectorAll('[data-page="' + id + '"]').forEach(b => b.classList.add('on'));
+  }
+  if (target) {
+    target.querySelectorAll('.rule,.move,.about-block').forEach(el => {
+      el.style.animation = 'none';
+      el.offsetHeight;
+      el.style.animation = '';
+    });
+  }
+  window.scrollTo(0, 0);
+}
+
+function goHome() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.getElementById('landing').classList.add('on');
+  document.getElementById('navLinks').innerHTML = '';
+  document.getElementById('mobmenu').innerHTML = '';
+  document.getElementById('navBadge').style.display = 'none';
+  currentEdition = null;
+  closeMobile();
+  window.scrollTo(0, 0);
+}
+
+function toggleMenu() {
+  document.getElementById('hbg').classList.toggle('open');
+  document.getElementById('mobmenu').classList.toggle('open');
+}
+
+function closeMobile() {
+  document.getElementById('hbg').classList.remove('open');
+  document.getElementById('mobmenu').classList.remove('open');
+}
+
+// ── GOOGLE SHEETS ENDPOINT ──────────────────────────────────────────
+// After deploying your Apps Script, paste your Web App URL here:
+const SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
+
+async function submitMove() {
+  const name     = document.getElementById('mName').value.trim();
+  const moveName = document.getElementById('mMoveName').value.trim();
+  const type     = document.querySelector('input[name="moveType"]:checked').value;
+  const gesture  = document.getElementById('mGesture').value.trim();
+  const notes    = document.getElementById('mNotes').value.trim();
+  const errEl    = document.getElementById('moveError');
+  const btn      = document.getElementById('submitMoveBtn');
+
+  errEl.style.display = 'none';
+
+  if (!name || !moveName || !gesture) {
+    errEl.textContent = 'Name, Move Name, and Gesture description are all required.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  document.getElementById('submitMoveTxt').style.display = 'none';
+  document.getElementById('submitMoveSpinner').style.display = 'inline';
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        submitter: name,
+        moveName,
+        type,
+        gesture,
+        notes,
+        timestamp: new Date().toISOString()
+      })
+    });
+    document.getElementById('suggestMoveForm').style.display = 'none';
+    document.getElementById('suggestMoveOk').style.display = 'block';
+  } catch (e) {
+    errEl.textContent = 'Submission failed. Check your connection and try again.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    document.getElementById('submitMoveTxt').style.display = 'inline';
+    document.getElementById('submitMoveSpinner').style.display = 'none';
+  }
+}
+
+function resetMoveForm() {
+  document.getElementById('mName').value = '';
+  document.getElementById('mMoveName').value = '';
+  document.getElementById('mGesture').value = '';
+  document.getElementById('mNotes').value = '';
+  document.querySelector('input[name="moveType"][value="Pass"]').checked = true;
+  document.getElementById('submitMoveBtn').disabled = false;
+  document.getElementById('submitMoveTxt').style.display = 'inline';
+  document.getElementById('submitMoveSpinner').style.display = 'none';
+  document.getElementById('moveError').style.display = 'none';
+  document.getElementById('suggestMoveForm').style.display = 'block';
+  document.getElementById('suggestMoveOk').style.display = 'none';
+}
+</script>
+</body>
+</html>
